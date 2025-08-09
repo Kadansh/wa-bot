@@ -1,0 +1,51 @@
+name: Lock WA group
+on:
+  schedule:
+    - cron: '0 19 * * *'  # 22:00 Israel during summer (IDT, UTC+3)
+    # - cron: '*/10 * * * *'  # every 10 min (testing)
+    
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Print only'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: lock-workflow
+  cancel-in-progress: true
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set DRY_RUN env
+        run: echo "DRY_RUN=${{ github.event.inputs.dryRun || 'false' }}" >> $GITHUB_ENV
+
+      - name: Restore auth state
+        if: env.DRY_RUN != 'true'
+        run: |
+          mkdir -p auth
+          echo "${{ secrets.WA_AUTH }}" | base64 -d | tar xz -C ./auth
+
+      - name: Install deps
+        if: env.DRY_RUN != 'true'
+        run: npm ci
+
+      - name: Lock group
+        if: env.DRY_RUN != 'true'
+        env:
+          NODE_OPTIONS: --unhandled-rejections=strict
+        run: |
+          set -e
+          node --trace-warnings lock.js 2>&1 | tee lock-run.log
+
+      - name: Upload log if failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lock-run-log
+          path: lock-run.log

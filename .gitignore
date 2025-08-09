@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Auth/session data
+auth/
+wa_auth.b64
+/wa_auth.b64
+
+# Env files
+.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/

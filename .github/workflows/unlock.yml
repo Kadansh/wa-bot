@@ -1,0 +1,51 @@
+name: Unlock WA group
+on:
+  schedule:
+    - cron: '0 4 * * *'  # 07:00 Israel during summer (IDT, UTC+3)
+    # - cron: '0 5 * * *'  # 07:00 Israel during winter (IST, UTC+2)
+    
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Print only'
+        required: false
+        default: 'false'
+
+concurrency:
+  group: unlock-workflow
+  cancel-in-progress: true
+
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set DRY_RUN env
+        run: echo "DRY_RUN=${{ github.event.inputs.dryRun || 'false' }}" >> $GITHUB_ENV
+
+      - name: Restore auth state
+        if: env.DRY_RUN != 'true'
+        run: |
+          mkdir -p auth
+          echo "${{ secrets.WA_AUTH }}" | base64 -d | tar xz -C ./auth
+
+      - name: Install deps
+        if: env.DRY_RUN != 'true'
+        run: npm ci
+
+      - name: Unlock group
+        if: env.DRY_RUN != 'true'
+        env:
+          NODE_OPTIONS: --unhandled-rejections=strict
+        run: |
+          set -e
+          node --trace-warnings unlock.js 2>&1 | tee unlock-run.log
+
+      - name: Upload log if failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unlock-run-log
+          path: unlock-run.log
