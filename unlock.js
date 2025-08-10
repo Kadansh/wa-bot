@@ -4,8 +4,10 @@ import qrcode from 'qrcode-terminal'
 
 const { makeWASocket, useMultiFileAuthState, DisconnectReason } = pkg
 
-// const GROUP_JID = '120363401064874173@g.us' // your group - ITS
-const GROUP_JID = '120363402460230782@g.us' // your group - Kadan Test
+const GROUP_JIDS = (process.env.GROUP_JIDS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
 
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState('./auth')
@@ -17,8 +19,17 @@ async function start() {
     if (qr) qrcode.generate(qr, { small: true })
 
     if (connection === 'open') {
-      await sock.groupSettingUpdate(GROUP_JID, 'not_announcement') // everyone can send
-      console.log('Group sending unlocked (everyone can send).')
+      if (GROUP_JIDS.length === 0) {
+        console.error('No GROUP_JIDS provided'); process.exit(1)
+      }
+      for (const jid of GROUP_JIDS) {
+        try {
+          await sock.groupSettingUpdate(jid, 'not_announcement')
+          console.log(`Unlocked ${jid}`)
+        } catch (e) {
+          console.error(`Failed to unlock ${jid}:`, e?.message || e)
+        }
+      }
       process.exit(0)
     }
 

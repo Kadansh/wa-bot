@@ -1,7 +1,7 @@
 name: Lock WA group
 on:
   schedule:
-    - cron: '0 19 * * *'  # 22:00 Israel during summer (IDT, UTC+3)
+    - cron: '55 18 * * *'  # 21:55 Israel during summer (IDT, UTC+3)
     # - cron: '*/10 * * * *'  # every 10 min (testing)
     
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set DRY_RUN env
         run: echo "DRY_RUN=${{ github.event.inputs.dryRun || 'false' }}" >> $GITHUB_ENV
@@ -39,6 +39,7 @@ jobs:
         if: env.DRY_RUN != 'true'
         env:
           NODE_OPTIONS: --unhandled-rejections=strict
+          GROUP_JIDS: ${{ vars.GROUP_JIDS }}
         run: |
           set -e
           node --trace-warnings lock.js 2>&1 | tee lock-run.log
