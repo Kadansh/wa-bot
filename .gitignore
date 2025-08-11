@@ -5,6 +5,7 @@ node_modules/
 auth/
 wa_auth.b64
 /wa_auth.b64
+auth_actions.txt
 
 # Env files
 .env

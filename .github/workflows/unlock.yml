@@ -1,7 +1,7 @@
 name: Unlock WA group
 on:
   schedule:
-    - cron: '50 4 * * *'  # 07:50 Israel during summer (IDT, UTC+3)
+    - cron: '50 3 * * *'  # 06:50 Israel during summer (IDT, UTC+3)
     # - cron: '0 5 * * *'  # 07:00 Israel during winter (IST, UTC+2)
     
   workflow_dispatch:
